@@ -10,7 +10,6 @@
 
 
 #include "WPILib.h"
-
 #include <LiveWindow/LiveWindow.h>
 #include <SmartDashboard/SendableChooser.h>
 #include <SmartDashboard/SmartDashboard.h>
@@ -29,11 +28,16 @@ public:
 	frc::SpeedControllerGroup rMots{ frontRightMot, rearRightMot };
 	frc::DifferentialDrive drive{lMots, rMots};
 
+	// gyro
+	ADXRS450_Gyro gyro;		 // get angles and stuff
+
 	// xbox controller
 	frc::Joystick xbox{0};
 
 	// pneumatics
 	frc::DoubleSolenoid dumper{0, 1};
+	frc::DoubleSolenoid grabber{2, 3};
+
 
 	// autonomous chooser code
 	frc::LiveWindow& lw = *LiveWindow::GetInstance();
@@ -69,7 +73,14 @@ public:
 		std::cout << "Auto selected: " << autoSelected << std::endl;
 
 		if (autoSelected == autoDriveStraight) {
-			// Custom Auto goes here
+			const double TURNINGCONST = 0.03;
+			gyro.Reset();
+			double offset = gyro.GetAngle();
+			for (int i = 0; i < 160; i++){
+				Wait (0.05 / 4);
+				drive.ArcadeDrive(.5, (offset - gyro.GetAngle()) * TURNINGCONST);
+			}
+			drive.ArcadeDrive(0,0);
 		} else {
 			// do nothing
 		}
@@ -97,6 +108,13 @@ public:
 			dumper.Set(frc::DoubleSolenoid::kReverse);
 		} else {
 			dumper.Set(frc::DoubleSolenoid::kOff);
+		}
+		if (xbox.GetRawButton(3)) {
+			grabber.Set(frc::DoubleSolenoid::kForward);
+		} else if (xbox.GetRawButton(4)) {
+			grabber.Set(frc::DoubleSolenoid::kReverse);
+		} else {
+			grabber.Set(frc::DoubleSolenoid::kOff);
 		}
 	}
 
