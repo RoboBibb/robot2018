@@ -78,7 +78,7 @@ public:
 			double offset = gyro.GetAngle();
 			for (int i = 0; i < 160; i++){
 				Wait (0.05 / 4);
-				drive.ArcadeDrive(.5, (offset - gyro.GetAngle()) * TURNINGCONST);
+				drive.ArcadeDrive(-.5, (offset - gyro.GetAngle()) * TURNINGCONST);
 			}
 			drive.ArcadeDrive(0,0);
 		} else {
@@ -99,7 +99,7 @@ public:
 	void TeleopPeriodic() {
 
 		// drive based on controller input
-		drive.ArcadeDrive(xbox.GetRawAxis(1), xbox.GetRawAxis(4));
+		drive.ArcadeDrive(-xbox.GetRawAxis(1), xbox.GetRawAxis(4));
 
 		// control pneumatics
 		if (xbox.GetRawButton(1)) {
