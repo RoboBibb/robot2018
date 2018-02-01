@@ -1,2 +1,2 @@
-# test-bot-2018
-Code for testing bot
+# Robot2018
+Code for our 2018 robot
