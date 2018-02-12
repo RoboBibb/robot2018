@@ -8,48 +8,43 @@
 #include <iostream>
 #include <string>
 
-
 #include "WPILib.h"
 #include <LiveWindow/LiveWindow.h>
 #include <SmartDashboard/SendableChooser.h>
 #include <SmartDashboard/SmartDashboard.h>
 
-
 class Robot : public frc::IterativeRobot {
 public:
 
-	// drive train
-	frc::Spark frontLeftMot{2};
-	frc::Spark rearLeftMot{3};
-	frc::SpeedControllerGroup lMots{ frontLeftMot, rearLeftMot };
+	// left side of drivetrain
+	frc::PWMVictorSPX left0Mot{0}, left1Mot{1}, left2Mot{2};
+	frc::SpeedControllerGroup lMots{ left0Mot, left1Mot, left2Mot };
 
-	frc::Spark frontRightMot{0};
-	frc::Spark rearRightMot{1};
-	frc::SpeedControllerGroup rMots{ frontRightMot, rearRightMot };
+	// right side of drivetrain
+	frc::PWMVictorSPX right0Mot{3}, right1Mot{4}, right2Mot{5};
+	frc::SpeedControllerGroup rMots{ right0Mot, right1Mot, right2Mot };
+
+	// drive train object
 	frc::DifferentialDrive drive{lMots, rMots};
 
-	// gyro
-	ADXRS450_Gyro gyro;		 // get angles and stuff
 
-	// xbox controller
-	frc::Joystick xbox{0};
-
-	// pneumatics
-	frc::DoubleSolenoid dumper{0, 1};
-	frc::DoubleSolenoid grabber{2, 3};
+	// xbox ctlr for main driver
+	frc::Joystick driveCtl{0};
 
 
-	// autonomous chooser code
-	frc::LiveWindow& lw = *LiveWindow::GetInstance();
-	frc::SendableChooser<std::string> autoChooser;
-	const std::string autoNameDefault = "Default";
-	const std::string autoDriveStraight = "drive straight";
-	std::string autoSelected;
+
+	frc::LiveWindow& m_lw = *LiveWindow::GetInstance();
+	frc::SendableChooser<std::string> m_chooser;
+	const std::string kAutoNameDefault = "Default";
+	const std::string kAutoNameCustom = "My Auto";
+	std::string m_autoSelected;
+
+
 
 	void RobotInit() {
-		autoChooser.AddDefault(autoNameDefault, autoNameDefault);
-		autoChooser.AddObject(autoDriveStraight, autoDriveStraight);
-		frc::SmartDashboard::PutData("Auto Modes", &autoChooser);
+		m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
+		m_chooser.AddObject(kAutoNameCustom, kAutoNameCustom);
+		frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 	}
 
 	/*
@@ -67,55 +62,36 @@ public:
 	 * well.
 	 */
 	void AutonomousInit() override {
-		autoSelected = autoChooser.GetSelected();
+		m_autoSelected = m_chooser.GetSelected();
 		// m_autoSelected = SmartDashboard::GetString(
 		// 		"Auto Selector", kAutoNameDefault);
-		std::cout << "Auto selected: " << autoSelected << std::endl;
+		std::cout << "Auto selected: " << m_autoSelected << std::endl;
 
-		if (autoSelected == autoDriveStraight) {
-			const double TURNINGCONST = 0.03;
-			gyro.Reset();
-			double offset = gyro.GetAngle();
-			for (int i = 0; i < 160; i++){
-				Wait (0.05 / 4);
-				drive.ArcadeDrive(-.5, (offset - gyro.GetAngle()) * TURNINGCONST);
-			}
-			drive.ArcadeDrive(0,0);
-		} else {
-			// do nothing
-		}
-	}
-
-	void AutonomousPeriodic() {
-		if (autoSelected == autoDriveStraight) {
+		if (m_autoSelected == kAutoNameCustom) {
 			// Custom Auto goes here
 		} else {
 			// Default Auto goes here
 		}
 	}
 
-	void TeleopInit() {}
+	void AutonomousPeriodic() {
+		if (m_autoSelected == kAutoNameCustom) {
+			// Custom Auto goes here
+		} else {
+			// Default Auto goes here
+		}
+	}
 
+
+
+	void TeleopInit() {}
 	void TeleopPeriodic() {
 
-		// drive based on controller input
-		drive.ArcadeDrive(-xbox.GetRawAxis(1), xbox.GetRawAxis(4));
 
-		// control pneumatics
-		if (xbox.GetRawButton(1)) {
-			dumper.Set(frc::DoubleSolenoid::kForward);
-		} else if (xbox.GetRawButton(2)) {
-			dumper.Set(frc::DoubleSolenoid::kReverse);
-		} else {
-			dumper.Set(frc::DoubleSolenoid::kOff);
-		}
-		if (xbox.GetRawButton(3)) {
-			grabber.Set(frc::DoubleSolenoid::kForward);
-		} else if (xbox.GetRawButton(4)) {
-			grabber.Set(frc::DoubleSolenoid::kReverse);
-		} else {
-			grabber.Set(frc::DoubleSolenoid::kOff);
-		}
+		// arcade drive with 2 sticks & 80% turn speed
+		drive.ArcadeDrive(driveCtl.GetRawAxis(1), driveCtl.GetRawAxis(4) * 0.8);
+
+
 	}
 
 	void TestPeriodic() {}
