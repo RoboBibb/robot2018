@@ -27,24 +27,27 @@ public:
 	// drive train object
 	frc::DifferentialDrive drive{lMots, rMots};
 
-
 	// xbox ctlr for main driver
 	frc::Joystick driveCtl{0};
+
+	frc::ADXRS450_Gyro gyro;
 
 
 
 	frc::LiveWindow& m_lw = *LiveWindow::GetInstance();
 	frc::SendableChooser<std::string> m_chooser;
 	const std::string kAutoNameDefault = "Default";
-	const std::string kAutoNameCustom = "My Auto";
+	const std::string kAutoDriveStraight = "My Auto";
 	std::string m_autoSelected;
 
 
 
 	void RobotInit() {
+		gyro.Calibrate();
 		m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
-		m_chooser.AddObject(kAutoNameCustom, kAutoNameCustom);
+		m_chooser.AddObject(kAutoDriveStraight, kAutoDriveStraight);
 		frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
+
 	}
 
 	/*
@@ -67,15 +70,25 @@ public:
 		// 		"Auto Selector", kAutoNameDefault);
 		std::cout << "Auto selected: " << m_autoSelected << std::endl;
 
-		if (m_autoSelected == kAutoNameCustom) {
-			// Custom Auto goes here
+		if (m_autoSelected == kAutoDriveStraight) {
+			double center = gyro.GetAngle();
+			// drive in direction of base angle 1000 times
+			for(unsigned i = 0; i < 1000; i++){
+				// redirect towards base angle
+				drive.ArcadeDrive(.5, (gyro.GetAngle() - center) / 45);
+				// drive straight 2 seconds / 1000 times
+				Wait(2 / 1000);
+
+			}
 		} else {
 			// Default Auto goes here
 		}
+		// Stop
+		drive.ArcadeDrive(0, 0);
 	}
 
 	void AutonomousPeriodic() {
-		if (m_autoSelected == kAutoNameCustom) {
+		if (m_autoSelected == kAutoDriveStraight) {
 			// Custom Auto goes here
 		} else {
 			// Default Auto goes here
