@@ -29,16 +29,21 @@ public:
 
 	// xbox ctlr for main driver
 	frc::Joystick driveCtl{0};
+	frc::Joystick fxnCtl{1};
 
 	frc::ADXRS450_Gyro gyro;
+
+	frc::DoubleSolenoid grabber{7, 6};
+	frc::DoubleSolenoid flipper{0, 1};
 
 
 
 	frc::LiveWindow& m_lw = *LiveWindow::GetInstance();
 	frc::SendableChooser<std::string> m_chooser;
 	const std::string kAutoNameDefault = "Default";
-	const std::string kAutoDriveStraight = "My Auto";
+	const std::string kAutoDriveStraight = "Drive Straight";
 	std::string m_autoSelected;
+
 
 
 
@@ -104,6 +109,21 @@ public:
 		// arcade drive with 2 sticks & 80% turn speed
 		drive.ArcadeDrive(driveCtl.GetRawAxis(1), driveCtl.GetRawAxis(4) * 0.8);
 
+		// flipper control
+		if (fxnCtl.GetRawButton(1)) {
+			flipper.Set(frc::DoubleSolenoid::kForward);
+
+		} else if (fxnCtl.GetRawButton(2)) {
+			flipper.Set(frc::DoubleSolenoid::kReverse);
+		}
+
+		// grabber control
+		if (fxnCtl.GetRawButton(3)) {
+			grabber.Set(frc::DoubleSolenoid::kForward);
+
+		} else if (fxnCtl.GetRawButton(4)) {
+			grabber.Set(frc::DoubleSolenoid::kReverse);
+		}
 
 	}
 
