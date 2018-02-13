@@ -31,34 +31,38 @@ public:
 	frc::Joystick driveCtl{0};
 	frc::Joystick fxnCtl{1};
 
+	// gyro
 	frc::ADXRS450_Gyro gyro;
 
+	// pneumatics
+
+	// claw to grab boxes
 	frc::DoubleSolenoid grabber{7, 6};
+	// launch cube from front
 	frc::DoubleSolenoid flipper{0, 1};
 
 
-
+	// autonomous chooser on DS
 	frc::LiveWindow& m_lw = *LiveWindow::GetInstance();
 	frc::SendableChooser<std::string> m_chooser;
 	const std::string kAutoNameDefault = "Default";
-	const std::string kAutoDriveStraight = "Drive Straight (no dump)";
-	const std::string kAutoDriveStraightLeft = "drive straight (left)";
-	const std::string kAutoDriveStraightRight = "drive straight (right)";
-
-
+	const std::string kAutoDriveStraight = "Drive Straight (no dump)";	  // drive forwards
+	const std::string kAutoDriveStraightLeft = "drive straight (left)";   // starting on left side of field
+	const std::string kAutoDriveStraightRight = "drive straight (right)"; // starting on right side of field
 	std::string m_autoSelected;
 
 
 
 
-	void RobotInit() {
+	void RobotInit(){
+
 		gyro.Calibrate();
+
 		m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
 		m_chooser.AddObject(kAutoDriveStraight, kAutoDriveStraight);
 		m_chooser.AddObject(kAutoDriveStraightLeft, kAutoDriveStraightLeft);
 		m_chooser.AddObject(kAutoDriveStraightRight, kAutoDriveStraightRight);
 		frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
-
 	}
 
 	/*
@@ -76,11 +80,12 @@ public:
 	 * well.
 	 */
 	void AutonomousInit() override {
+
+		// get chosen auto
 		m_autoSelected = m_chooser.GetSelected();
-		// m_autoSelected = SmartDashboard::GetString(
-		// 		"Auto Selector", kAutoNameDefault);
 		std::cout << "Auto selected: " << m_autoSelected << std::endl;
 
+		// drive straight dont dump
 		if (m_autoSelected == kAutoDriveStraight) {
 			double center = gyro.GetAngle();
 			// drive in direction of base angle 1000 times
@@ -91,6 +96,7 @@ public:
 				Wait(2 / 1000);
 
 			}
+
 		} else if(m_autoSelected == kAutoDriveStraightLeft) {
 			double center = gyro.GetAngle();
 			// drive in direction of base angle 1000 times
@@ -129,7 +135,7 @@ public:
 		return msg[0] == 'L';
 	}
 
-	void AutonomousPeriodic() {
+	void AutonomousPeriodic(){
 		if (m_autoSelected == kAutoDriveStraight) {
 			// Custom Auto goes here
 		} else {
@@ -139,8 +145,8 @@ public:
 
 
 
-	void TeleopInit() {}
-	void TeleopPeriodic() {
+	void TeleopInit(){}
+	void TeleopPeriodic(){
 
 
 		// arcade drive with 2 sticks & 80% turn speed
