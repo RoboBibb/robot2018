@@ -41,7 +41,11 @@ public:
 	frc::LiveWindow& m_lw = *LiveWindow::GetInstance();
 	frc::SendableChooser<std::string> m_chooser;
 	const std::string kAutoNameDefault = "Default";
-	const std::string kAutoDriveStraight = "Drive Straight";
+	const std::string kAutoDriveStraight = "Drive Straight (no dump)";
+	const std::string kAutoDriveStraightLeft = "drive straight (left)";
+	const std::string kAutoDriveStraightRight = "drive straight (right)";
+
+
 	std::string m_autoSelected;
 
 
@@ -51,6 +55,8 @@ public:
 		gyro.Calibrate();
 		m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
 		m_chooser.AddObject(kAutoDriveStraight, kAutoDriveStraight);
+		m_chooser.AddObject(kAutoDriveStraightLeft, kAutoDriveStraightLeft);
+		m_chooser.AddObject(kAutoDriveStraightRight, kAutoDriveStraightRight);
 		frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 
 	}
@@ -85,11 +91,42 @@ public:
 				Wait(2 / 1000);
 
 			}
-		} else {
-			// Default Auto goes here
+		} else if(m_autoSelected == kAutoDriveStraightLeft) {
+			double center = gyro.GetAngle();
+			// drive in direction of base angle 1000 times
+			for(unsigned i = 0; i < 1000; i++){
+				// redirect towards base angle
+				drive.ArcadeDrive(.5, (gyro.GetAngle() - center) / 45);
+				// drive straight 2 seconds / 1000 times
+				Wait(2 / 1000);
+			}
+			if(startLeft()){
+				flipper.Set(frc::DoubleSolenoid::kForward);
+			}
+
+		}else if(m_autoSelected == kAutoDriveStraightRight) {
+			double center = gyro.GetAngle();
+			// drive in direction of base angle 1000 times
+			for(unsigned i = 0; i < 1000; i++){
+				// redirect towards base angle
+				drive.ArcadeDrive(.5, (gyro.GetAngle() - center) / 45);
+				// drive straight 2 seconds / 1000 times
+				Wait(2 / 1000);
+			}
+			if(!startLeft()){
+				flipper.Set(frc::DoubleSolenoid::kForward);
+			}
 		}
 		// Stop
 		drive.ArcadeDrive(0, 0);
+	}
+
+	bool startLeft(){
+		std::string msg = frc::DriverStation::GetInstance().GetGameSpecificMessage();
+		while(msg.length() == 0){
+			msg = frc::DriverStation::GetInstance().GetGameSpecificMessage();
+		}
+		return msg[0] == 'L';
 	}
 
 	void AutonomousPeriodic() {
@@ -124,6 +161,7 @@ public:
 		} else if (fxnCtl.GetRawButton(4)) {
 			grabber.Set(frc::DoubleSolenoid::kReverse);
 		}
+
 
 	}
 
