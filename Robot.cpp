@@ -31,6 +31,8 @@ public:
 	frc::Joystick driveCtl{0};
 	frc::Joystick fxnCtl{1};
 
+	frc::Talon armCtl{7};
+
 	// gyro
 	frc::ADXRS450_Gyro gyro;
 
@@ -167,6 +169,16 @@ public:
 		} else if (fxnCtl.GetRawButton(4)) {
 			grabber.Set(frc::DoubleSolenoid::kReverse);
 		}
+
+		if(fxnCtl.GetRawButton(5)) {
+			armCtl.Set(.5);
+		}else if(fxnCtl.GetRawButton(6)) {
+			armCtl.Set(-.5);
+		}else{
+			armCtl.Set(0);
+		}
+
+
 
 
 	}
