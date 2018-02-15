@@ -39,9 +39,9 @@ public:
 	// pneumatics
 
 	// claw to grab boxes
-	frc::DoubleSolenoid grabber{7, 6};
+	frc::DoubleSolenoid grabber{0, 1};
 	// launch cube from front
-	frc::DoubleSolenoid flipper{0, 1};
+	frc::DoubleSolenoid flipper{7, 6};
 
 
 	// autonomous chooser on DS
@@ -151,19 +151,23 @@ public:
 	void TeleopPeriodic(){
 
 
+		// reverse button
 		static bool switchable = true;
 		static float dir = 1;
 		if (switchable && driveCtl.GetRawButton(1)) {
 			dir = -dir;
-		} else if (!switchable && !driveCtl.GetRawButton(2)) {
+			switchable = false;
+		} else if (!switchable && !driveCtl.GetRawButton(1)) {
 			switchable = true;
 		}
 
-		//reverse elevator
-		// axis 3
 
 		// arcade drive with 2 sticks & 80% turn speed
-		drive.ArcadeDrive(dir * driveCtl.GetRawAxis(1), driveCtl.GetRawAxis(4) * 0.8);
+		drive.ArcadeDrive(
+				(driveCtl.GetRawButton(2) ? 0.4 : 1 ) *
+				dir * driveCtl.GetRawAxis(1),
+
+				driveCtl.GetRawAxis(4) * 0.8);
 
 		// flipper control
 		if (fxnCtl.GetRawAxis(3) > 0.75) {
@@ -173,14 +177,14 @@ public:
 		}
 
 		// grabber control
-		if (fxnCtl.GetRawButton(3)) {
+		if (fxnCtl.GetRawButton(1)) {
 			grabber.Set(frc::DoubleSolenoid::kForward);
 
-		} else if (fxnCtl.GetRawButton(4)) {
+		} else if (fxnCtl.GetRawButton(2)) {
 			grabber.Set(frc::DoubleSolenoid::kReverse);
 		}
 
-		// elevator
+		// elevator ctl
 		if (fxnCtl.GetRawButton(6)) {
 			armCtl.Set(.5);
 		} else if (fxnCtl.GetRawButton(5)) {
