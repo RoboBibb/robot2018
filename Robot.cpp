@@ -151,14 +151,24 @@ public:
 	void TeleopPeriodic(){
 
 
+		static bool switchable = true;
+		static float dir = 1;
+		if (switchable && driveCtl.GetRawButton(1)) {
+			dir = -dir;
+		} else if (!switchable && !driveCtl.GetRawButton(2)) {
+			switchable = true;
+		}
+
+		//reverse elevator
+		// axis 3
+
 		// arcade drive with 2 sticks & 80% turn speed
-		drive.ArcadeDrive(driveCtl.GetRawAxis(1), driveCtl.GetRawAxis(4) * 0.8);
+		drive.ArcadeDrive(dir * driveCtl.GetRawAxis(1), driveCtl.GetRawAxis(4) * 0.8);
 
 		// flipper control
-		if (fxnCtl.GetRawButton(1)) {
+		if (fxnCtl.GetRawAxis(3) > 0.75) {
 			flipper.Set(frc::DoubleSolenoid::kForward);
-
-		} else if (fxnCtl.GetRawButton(2)) {
+		} else {
 			flipper.Set(frc::DoubleSolenoid::kReverse);
 		}
 
@@ -170,11 +180,12 @@ public:
 			grabber.Set(frc::DoubleSolenoid::kReverse);
 		}
 
-		if(fxnCtl.GetRawButton(5)) {
+		// elevator
+		if (fxnCtl.GetRawButton(6)) {
 			armCtl.Set(.5);
-		}else if(fxnCtl.GetRawButton(6)) {
+		} else if (fxnCtl.GetRawButton(5)) {
 			armCtl.Set(-.5);
-		}else{
+		} else {
 			armCtl.Set(0);
 		}
 
