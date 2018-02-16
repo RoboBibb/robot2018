@@ -45,7 +45,7 @@ public:
 
 
 	// autonomous chooser on DS
-	frc::LiveWindow& m_lw = *LiveWindow::GetInstance();
+	frc::LiveWindow* m_lw = LiveWindow::GetInstance();
 	frc::SendableChooser<std::string> m_chooser;
 	const std::string kAutoNameDefault = "Default";
 	const std::string kAutoDriveStraight = "Drive Straight (no dump)";	  // drive forwards
@@ -55,9 +55,11 @@ public:
 
 
 
+	Robot(){
+		drive.SetExpiration(0.1);
+	}
 
 	void RobotInit(){
-
 		gyro.Calibrate();
 
 		m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
@@ -65,6 +67,7 @@ public:
 		m_chooser.AddObject(kAutoDriveStraightLeft, kAutoDriveStraightLeft);
 		m_chooser.AddObject(kAutoDriveStraightRight, kAutoDriveStraightRight);
 		frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
+
 	}
 
 	/*
@@ -86,6 +89,14 @@ public:
 		// get chosen auto
 		m_autoSelected = m_chooser.GetSelected();
 		std::cout << "Auto selected: " << m_autoSelected << std::endl;
+
+		m_autoSelected = SmartDashboard::GetString("Auto Modes", kAutoNameDefault);
+		std::cout << "Auto selected: " << m_autoSelected << std::endl;
+
+
+
+		// enable motor controllers
+		drive.SetSafetyEnabled(false);
 
 		// drive straight dont dump
 		if (m_autoSelected == kAutoDriveStraight) {
@@ -151,6 +162,7 @@ public:
 	void TeleopPeriodic(){
 
 
+
 		// reverse button
 		static bool switchable = true;
 		static float dir = 1;
@@ -166,7 +178,7 @@ public:
 		drive.ArcadeDrive(
 				(driveCtl.GetRawButton(2) ? 0.4 : 1 ) *
 				dir * driveCtl.GetRawAxis(1),
-
+				(driveCtl.GetRawButton(2) ? 0.8 : 1 ) *
 				driveCtl.GetRawAxis(4) * 0.8);
 
 		// flipper control
@@ -184,13 +196,12 @@ public:
 			grabber.Set(frc::DoubleSolenoid::kReverse);
 		}
 
+
 		// elevator ctl
 		if (fxnCtl.GetRawButton(6)) {
-			armCtl.Set(.5);
-		} else if (fxnCtl.GetRawButton(5)) {
 			armCtl.Set(-.5);
 		} else {
-			armCtl.Set(0);
+			armCtl.Set(fxnCtl.GetRawAxis(2) - 0.5);
 		}
 
 
