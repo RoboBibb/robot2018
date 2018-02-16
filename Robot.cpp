@@ -53,13 +53,22 @@ public:
 	const std::string kAutoDriveStraightRight = "drive straight (right)"; // starting on right side of field
 	std::string m_autoSelected;
 
+	const std::string autos[4] = { kAutoNameDefault,
+								kAutoDriveStraight,
+								kAutoDriveStraightLeft,
+								kAutoDriveStraightRight };
+
 
 
 	Robot(){
 		drive.SetExpiration(0.1);
+
+
 	}
 
 	void RobotInit(){
+
+		std::cout <<"initializing...";
 		gyro.Calibrate();
 
 		m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
@@ -67,6 +76,33 @@ public:
 		m_chooser.AddObject(kAutoDriveStraightLeft, kAutoDriveStraightLeft);
 		m_chooser.AddObject(kAutoDriveStraightRight, kAutoDriveStraightRight);
 		frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
+
+
+		frc::SmartDashboard::PutNumber("auto mode\n"
+				"<0> default (do nothing)\n"
+				"<1> drive straight (no dump)\n"
+				"<2> drive straight (left)\n"
+				"<3> drive straight (right)", 0);
+
+		std::cout <<"done\n";
+
+	}
+
+	// should be more accurate, but untested
+	void driveStraight(frc::ADXRS450_Gyro& gyro, frc::DifferentialDrive& mots, const double time, const double speed = 0.5){
+		const double DS_kP = 0.03, DS_CYCLETIME = 0.004;
+
+		// get angle to maintain as zero
+		gyro.Reset();
+
+		// drive forward for the set ammount of time
+		for (int i = (int) (time / (DS_CYCLETIME / abs(speed))); i > 0; i--) {
+			// turn to correct heading
+			mots.ArcadeDrive(speed, -gyro.GetAngle() * DS_kP); // add negatives for inverted steering/drive
+			Wait(DS_CYCLETIME);
+		}
+
+		mots.ArcadeDrive(0.0, 0.0);
 
 	}
 
@@ -88,11 +124,20 @@ public:
 
 		// get chosen auto
 		m_autoSelected = m_chooser.GetSelected();
-		std::cout << "Auto selected: " << m_autoSelected << std::endl; // (empty string)
+		std::cout << "Auto selected: " << m_autoSelected << std::endl; // doesn't work (empty string)
 
-		m_autoSelected = SmartDashboard::GetString("Auto Modes", kAutoNameDefault);
+		m_autoSelected = SmartDashboard::GetString("Auto Selector", kAutoNameDefault);
+		std::cout << "Auto selected: " << m_autoSelected << std::endl; // doesn't work("default")
+
+
+
+		// doesn't work anymore
+		m_autoSelected = autos[(int) SmartDashboard::GetNumber("auto mode\n"
+				"0 - default (do nothing)\n"
+				"1 - drive straight (no dump)\n"
+				"2 - drive straight (left)\n"
+				"3 - drive straight (right)", 0)];
 		std::cout << "Auto selected: " << m_autoSelected << std::endl; // default
-
 
 
 		// enable motor controllers
@@ -100,52 +145,40 @@ public:
 
 		// drive straight dont dump
 		if (m_autoSelected == kAutoDriveStraight) {
-			double center = gyro.GetAngle();
-			// drive in direction of base angle 1000 times
-			for(unsigned i = 0; i < 1000; i++){
-				// redirect towards base angle
-				drive.ArcadeDrive(.5, (gyro.GetAngle() - center) / 45);
-				// drive straight 2 seconds / 1000 times
-				Wait(2 / 1000);
+			driveStraight(gyro, drive, 4, -0.5);
 
-			}
-
-		} else if(m_autoSelected == kAutoDriveStraightLeft) {
-			double center = gyro.GetAngle();
-			// drive in direction of base angle 1000 times
-			for(unsigned i = 0; i < 1000; i++){
-				// redirect towards base angle
-				drive.ArcadeDrive(.5, (gyro.GetAngle() - center) / 45);
-				// drive straight 2 seconds / 1000 times
-				Wait(2 / 1000);
-			}
-			if(startLeft()){
+		} else if (m_autoSelected == kAutoDriveStraightLeft) {
+			driveStraight(gyro, drive, 4, -0.5);
+			if(startLeft()) {
 				flipper.Set(frc::DoubleSolenoid::kForward);
 			}
 
-		}else if(m_autoSelected == kAutoDriveStraightRight) {
-			double center = gyro.GetAngle();
-			// drive in direction of base angle 1000 times
-			for(unsigned i = 0; i < 1000; i++){
-				// redirect towards base angle
-				drive.ArcadeDrive(.5, (gyro.GetAngle() - center) / 45);
-				// drive straight 2 seconds / 1000 times
-				Wait(2 / 1000);
-			}
-			if(!startLeft()){
+		} else if (m_autoSelected == kAutoDriveStraightRight) {
+			driveStraight(gyro, drive, 4, -0.5);
+			if(!startLeft()) {
 				flipper.Set(frc::DoubleSolenoid::kForward);
 			}
+
+
+		} else {
+
+
 		}
 		// Stop
 		drive.ArcadeDrive(0, 0);
 	}
 
 	bool startLeft(){
+
+		std::cout <<"checking if starting left...";
 		std::string msg = frc::DriverStation::GetInstance().GetGameSpecificMessage();
 		while(msg.length() == 0){
 			msg = frc::DriverStation::GetInstance().GetGameSpecificMessage();
 		}
+
+		std::cout <<"done\n";
 		return msg[0] == 'L';
+
 	}
 
 	void AutonomousPeriodic(){
