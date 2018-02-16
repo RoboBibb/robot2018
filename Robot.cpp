@@ -88,10 +88,10 @@ public:
 
 		// get chosen auto
 		m_autoSelected = m_chooser.GetSelected();
-		std::cout << "Auto selected: " << m_autoSelected << std::endl;
+		std::cout << "Auto selected: " << m_autoSelected << std::endl; // (empty string)
 
 		m_autoSelected = SmartDashboard::GetString("Auto Modes", kAutoNameDefault);
-		std::cout << "Auto selected: " << m_autoSelected << std::endl;
+		std::cout << "Auto selected: " << m_autoSelected << std::endl; // default
 
 
 
