@@ -252,8 +252,8 @@ public:
 			rRoller.Set(.75);
 			std::cout <<"Kobe";
 		} else if (fxnCtl.GetRawButton(3)) {
-			lRoller.Set(-.75);
-			rRoller.Set(-.75);
+			lRoller.Set(-1);
+			rRoller.Set(-1);
 			std::cout <<"Slurp";
 		} else {
 			lRoller.Set(0);
