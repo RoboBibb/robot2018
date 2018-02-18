@@ -1,10 +1,3 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
-
 #include <iostream>
 #include <string>
 
@@ -15,6 +8,11 @@
 
 class Robot : public frc::IterativeRobot {
 public:
+
+
+
+	// we have a 6-cim tank drive 
+
 
 	// left side of drivetrain
 	frc::PWMVictorSPX left0Mot{0}, left1Mot{1}, left2Mot{2};
@@ -27,16 +25,12 @@ public:
 	// drive train object
 	frc::DifferentialDrive drive{lMots, rMots};
 
-	// xbox ctlr for main driver
-	frc::Joystick driveCtl{0};
-	frc::Joystick fxnCtl{1};
-
+	// raising and lowering the arms
 	frc::Talon armCtl{7};
 
-	// gyro
-	frc::ADXRS450_Gyro gyro;
-
-	// pneumatics
+	// roller arms (intake/shoot)
+	frc::Spark lRoller{8};
+	frc::Spark rRoller{9};
 
 	// claw to grab boxes
 	frc::DoubleSolenoid grabber{0, 1};
@@ -44,150 +38,173 @@ public:
 	frc::DoubleSolenoid flipper{7, 6};
 
 
+
+	// main gyro (SPI port - plugs to rio)
+	frc::ADXRS450_Gyro gyro;
+
+	// xbox ctlr for main driver
+	frc::Joystick driveCtl{0};
+	frc::Joystick fxnCtl{1};
+
+
+
 	// autonomous chooser on DS
-	frc::LiveWindow* m_lw = LiveWindow::GetInstance();
+	frc::LiveWindow& m_lw = *LiveWindow::GetInstance(); // this needed?
 	frc::SendableChooser<std::string> m_chooser;
 	const std::string kAutoNameDefault = "Default";
-	const std::string kAutoDriveStraight = "Drive Straight (no dump)";	  // drive forwards
-	const std::string kAutoDriveStraightLeft = "drive straight (left)";   // starting on left side of field
-	const std::string kAutoDriveStraightRight = "drive straight (right)"; // starting on right side of field
+	const std::string kAutoDriveStraight = "straight";	 // drive forwards
+	const std::string kAutoDriveStraightLeft = "left";   // starting on left side of field
+	const std::string kAutoDriveStraightRight = "right"; // starting on right side of field
 	std::string m_autoSelected;
 
+
+	// made in despiration for converting a number to a string, trying to make auto
+	//  chooser working...
 	const std::string autos[4] = { kAutoNameDefault,
-								kAutoDriveStraight,
-								kAutoDriveStraightLeft,
-								kAutoDriveStraightRight };
+		kAutoDriveStraight,
+		kAutoDriveStraightLeft,
+		kAutoDriveStraightRight
+	};
 
-
-
-	Robot(){
-		drive.SetExpiration(0.1);
-
-
-	}
-
+	// run when robot boots up
 	void RobotInit(){
 
 		std::cout <<"initializing...";
 		gyro.Calibrate();
 
 		m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
-		m_chooser.AddObject(kAutoDriveStraight, kAutoDriveStraight);
-		m_chooser.AddObject(kAutoDriveStraightLeft, kAutoDriveStraightLeft);
+		m_chooser.AddObject(kAutoDriveStraight,kAutoDriveStraight);
+		m_chooser.AddObject(kAutoDriveStraightLeft,kAutoDriveStraightLeft);
 		m_chooser.AddObject(kAutoDriveStraightRight, kAutoDriveStraightRight);
 		frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 
-
+		// newlines dont work...
 		frc::SmartDashboard::PutNumber("auto mode\n"
 				"<0> default (do nothing)\n"
 				"<1> drive straight (no dump)\n"
 				"<2> drive straight (left)\n"
 				"<3> drive straight (right)", 0);
 
+		// refresh rate
+		drive.SetExpiration(0.1);
+
 		std::cout <<"done\n";
 
 	}
 
-	// should be more accurate, but untested
+
+
+
+
+	// recycled from last year's utils.hpp
+	// drives straight for a set period of time at a set speed
 	void driveStraight(frc::ADXRS450_Gyro& gyro, frc::DifferentialDrive& mots, const double time, const double speed = 0.5){
-		const double DS_kP = 0.03, DS_CYCLETIME = 0.004;
+
+		// did some math to guesstimate these values
+		const double 
+			turningConst = -0.03, // if it doesnt work negate this
+			cycletime = 0.004;
 
 		// get angle to maintain as zero
 		gyro.Reset();
 
 		// drive forward for the set ammount of time
-		for (int i = (int) (time / (DS_CYCLETIME / abs(speed))); i > 0; i--) {
+		// cycletime is determined based on the speed of the robot
+		//		slower speed = longer input cycles
+		//		faster speed = shorter input cycles
+		for (int i = (int) (time / (cycletime / abs(speed))); i > 0; i--) {
 			// turn to correct heading
-			mots.ArcadeDrive(speed, -gyro.GetAngle() * DS_kP); // add negatives for inverted steering/drive
-			Wait(DS_CYCLETIME);
+			mots.ArcadeDrive(speed, gyro.GetAngle() * turningConst); // add negatives for inverted steering/drive
+			// drive straight a bit before readjusting steering
+			Wait(cycletime / abs(speed));
 		}
 
 		mots.ArcadeDrive(0.0, 0.0);
 
 	}
 
-	/*
-	 * This autonomous (along with the chooser code above) shows how to
-	 * select
-	 * between different autonomous modes using the dashboard. The sendable
-	 * chooser code works with the Java SmartDashboard. If you prefer the
-	 * LabVIEW Dashboard, remove all of the chooser code and uncomment the
-	 * GetString line to get the auto name from the text box below the Gyro.
-	 *
-	 * You can add additional auto modes by adding additional comparisons to
-	 * the
-	 * if-else structure below with additional strings. If using the
-	 * SendableChooser make sure to add them to the chooser code above as
-	 * well.
-	 */
+	// is the left side of ally switch our color?
+	bool startLeft(){
+		std::cout <<"checking if starting left...";
+
+		// attempt to get gamedata
+		// should be in form of "LRL", or something like that (from our perspective)
+		std::string msg = frc::DriverStation::GetInstance().GetGameSpecificMessage();
+
+		// keep attempting until we get it
+		while (msg.length() == 0) {
+			msg = frc::DriverStation::GetInstance().GetGameSpecificMessage();
+		}
+
+		std::cout <<"done\n";
+
+		// return result of this condition
+		return msg[0] == 'L';
+
+	}
+
+
+
 	void AutonomousInit() override {
 
 		// get chosen auto
 		m_autoSelected = m_chooser.GetSelected();
-		std::cout << "Auto selected: " << m_autoSelected << std::endl; // doesn't work (empty string)
+		std::cout << "Auto selected: " << m_autoSelected <<std::endl; // doesn't work (empty string)
 
 		m_autoSelected = SmartDashboard::GetString("Auto Selector", kAutoNameDefault);
-		std::cout << "Auto selected: " << m_autoSelected << std::endl; // doesn't work("default")
+		std::cout << "Auto selected: " << m_autoSelected <<std::endl; // doesn't work("default")
 
 
 
-		// doesn't work anymore
-		m_autoSelected = autos[(int) SmartDashboard::GetNumber("auto mode\n"
+		// worked twice then stopped letting us change the value
+		m_autoSelected = autos[(int)
+			SmartDashboard::GetNumber("auto mode\n"
 				"0 - default (do nothing)\n"
 				"1 - drive straight (no dump)\n"
 				"2 - drive straight (left)\n"
 				"3 - drive straight (right)", 0)];
-		std::cout << "Auto selected: " << m_autoSelected << std::endl; // default
+		std::cout << "Auto selected: " << m_autoSelected <<std::endl; // default
 
 
 		// enable motor controllers
 		drive.SetSafetyEnabled(false);
 
+
+
+
+
+
 		// drive straight dont dump
 		if (m_autoSelected == kAutoDriveStraight) {
-			driveStraight(gyro, drive, 4, -0.5);
+			driveStraight(gyro, drive, 2, -0.5);
 
+
+
+		// left auto
 		} else if (m_autoSelected == kAutoDriveStraightLeft) {
-			driveStraight(gyro, drive, 4, -0.5);
+			driveStraight(gyro, drive, 2, -0.5);
 			if(startLeft()) {
 				flipper.Set(frc::DoubleSolenoid::kForward);
 			}
 
+		// right auto
 		} else if (m_autoSelected == kAutoDriveStraightRight) {
-			driveStraight(gyro, drive, 4, -0.5);
+			driveStraight(gyro, drive, 2, -0.5);
 			if(!startLeft()) {
 				flipper.Set(frc::DoubleSolenoid::kForward);
 			}
 
 
 		} else {
-
-
-		}
-		// Stop
-		drive.ArcadeDrive(0, 0);
-	}
-
-	bool startLeft(){
-
-		std::cout <<"checking if starting left...";
-		std::string msg = frc::DriverStation::GetInstance().GetGameSpecificMessage();
-		while(msg.length() == 0){
-			msg = frc::DriverStation::GetInstance().GetGameSpecificMessage();
+			// failsafe, do nothing
 		}
 
-		std::cout <<"done\n";
-		return msg[0] == 'L';
 
 	}
 
-	void AutonomousPeriodic(){
-		if (m_autoSelected == kAutoDriveStraight) {
-			// Custom Auto goes here
-		} else {
-			// Default Auto goes here
-		}
-	}
+
+	
+	void AutonomousPeriodic(){}
 
 
 
@@ -196,23 +213,61 @@ public:
 
 
 
-		// reverse button
+		/* Driving
+		* a - reverse (toggle)
+		* b - slowmode (hold for slow)
+		* stick1 y - forwards & backwards
+		* stick2 x - left & right turning
+		*/
+
+		// reverse button is a on drive controller
+		// static variables' values are retained in-between cycles
+		// this code makes the button "sticky" and toggleable
 		static bool switchable = true;
-		static float dir = 1;
+		static int dir = 1;
 		if (switchable && driveCtl.GetRawButton(1)) {
 			dir = -dir;
 			switchable = false;
+			std::cout <<"driving reversed\n";
 		} else if (!switchable && !driveCtl.GetRawButton(1)) {
 			switchable = true;
 		}
 
 
 		// arcade drive with 2 sticks & 80% turn speed
+		// slowmode controlled by driver (button B)
 		drive.ArcadeDrive(
-				(driveCtl.GetRawButton(2) ? 0.4 : 1 ) *
-				dir * driveCtl.GetRawAxis(1),
-				(driveCtl.GetRawButton(2) ? 0.8 : 1 ) *
-				driveCtl.GetRawAxis(4) * 0.8);
+
+			// forward backwards
+			(driveCtl.GetRawButton(2) ? 0.4 : 1.0) * // 40% movespeed in slowmode
+				dir * // +/- 1
+					driveCtl.GetRawAxis(1)
+
+			,
+
+			// left right
+			(driveCtl.GetRawButton(2) ? 0.8 : 1.0) * // .8*.8 = 64% turnspeed in slowmode
+				driveCtl.GetRawAxis(4) * 0.8
+
+		);
+
+
+
+
+
+
+
+
+
+		/* functionaity
+		* a - close grabber
+		* b - open grabber
+		* x - intake
+		* y - shoot
+		* stick1 y - arm elevator
+		* right trigger - pop up dumper/flipper
+		*/
+
 
 		// flipper control
 		if (fxnCtl.GetRawAxis(3) > 0.75) {
@@ -224,21 +279,28 @@ public:
 		// grabber control
 		if (fxnCtl.GetRawButton(1)) {
 			grabber.Set(frc::DoubleSolenoid::kForward);
-
 		} else if (fxnCtl.GetRawButton(2)) {
 			grabber.Set(frc::DoubleSolenoid::kReverse);
 		}
 
 
 		// elevator ctl
-		if (fxnCtl.GetRawButton(6)) {
-			armCtl.Set(-.5);
+		armCtl.Set(fxnCtl.GetRawAxis(1) * -0.4);
+
+
+		// control rollers
+		if (fxnCtl.GetRawButton(4)) {
+			lRoller.Set(.75);
+			rRoller.Set(.75);
+			std::cout <<"Kobe";
+		} else if (fxnCtl.GetRawButton(3)) {
+			lRoller.Set(-.75);
+			rRoller.Set(-.75);
+			std::cout <<"Slurp";
 		} else {
-			armCtl.Set(fxnCtl.GetRawAxis(2) - 0.5);
+			lRoller.Set(0);
+			rRoller.Set(0);
 		}
-
-
-
 
 	}
 
