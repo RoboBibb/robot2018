@@ -6,13 +6,16 @@
 #include <SmartDashboard/SendableChooser.h>
 #include <SmartDashboard/SmartDashboard.h>
 
+
+#include "utils.hpp" // tate's collection of robot utilities
+
+
 class Robot : public frc::IterativeRobot {
 public:
 
 
 
 	// we have a 6-cim tank drive 
-
 
 	// left side of drivetrain
 	frc::PWMVictorSPX left0Mot{0}, left1Mot{1}, left2Mot{2};
@@ -22,8 +25,9 @@ public:
 	frc::PWMVictorSPX right0Mot{3}, right1Mot{4}, right2Mot{5};
 	frc::SpeedControllerGroup rMots{ right0Mot, right1Mot, right2Mot };
 
-	// drive train object
+	// drivetrain object
 	frc::DifferentialDrive drive{lMots, rMots};
+
 
 	// raising and lowering the arms
 	frc::Talon armCtl{7};
@@ -52,19 +56,12 @@ public:
 	frc::LiveWindow& m_lw = *LiveWindow::GetInstance(); // this needed?
 	frc::SendableChooser<std::string> m_chooser;
 	const std::string kAutoNameDefault = "Default";
-	const std::string kAutoDriveStraight = "straight";	 // drive forwards
-	const std::string kAutoDriveStraightLeft = "left";   // starting on left side of field
-	const std::string kAutoDriveStraightRight = "right"; // starting on right side of field
+	const std::string kAuto = "straight";	 // drive forwards
+	const std::string kAutoLeft = "left";   // starting on left side of field
+	const std::string kAutoRight = "right"; // starting on right side of field
+	const std::string kAutoExperiment = "experiment"; // left hook
 	std::string m_autoSelected;
 
-
-	// made in despiration for converting a number to a string, trying to make auto
-	//  chooser working...
-	const std::string autos[4] = { kAutoNameDefault,
-		kAutoDriveStraight,
-		kAutoDriveStraightLeft,
-		kAutoDriveStraightRight
-	};
 
 	// run when robot boots up
 	void RobotInit(){
@@ -73,17 +70,11 @@ public:
 		gyro.Calibrate();
 
 		m_chooser.AddDefault(kAutoNameDefault, kAutoNameDefault);
-		m_chooser.AddObject(kAutoDriveStraight,kAutoDriveStraight);
-		m_chooser.AddObject(kAutoDriveStraightLeft,kAutoDriveStraightLeft);
-		m_chooser.AddObject(kAutoDriveStraightRight, kAutoDriveStraightRight);
+		m_chooser.AddObject(kAuto,kAuto);
+		m_chooser.AddObject(kAutoLeft,kAutoLeft);
+		m_chooser.AddObject(kAutoRight, kAutoRight);
 		frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 
-		// newlines dont work...
-		frc::SmartDashboard::PutNumber("auto mode\n"
-				"<0> default (do nothing)\n"
-				"<1> drive straight (no dump)\n"
-				"<2> drive straight (left)\n"
-				"<3> drive straight (right)", 0);
 
 		// refresh rate
 		drive.SetExpiration(0.1);
@@ -92,36 +83,6 @@ public:
 
 	}
 
-
-
-
-
-	// recycled from last year's utils.hpp
-	// drives straight for a set period of time at a set speed
-	void driveStraight(frc::ADXRS450_Gyro& gyro, frc::DifferentialDrive& mots, const double time, const double speed = 0.5){
-
-		// did some math to guesstimate these values
-		const double 
-			turningConst = -0.03, // if it doesnt work negate this
-			cycletime = 0.004;
-
-		// get angle to maintain as zero
-		gyro.Reset();
-
-		// drive forward for the set ammount of time
-		// cycletime is determined based on the speed of the robot
-		//		slower speed = longer input cycles
-		//		faster speed = shorter input cycles
-		for (int i = (int) (time / (cycletime / abs(speed))); i > 0; i--) {
-			// turn to correct heading
-			mots.ArcadeDrive(speed, gyro.GetAngle() * turningConst); // add negatives for inverted steering/drive
-			// drive straight a bit before readjusting steering
-			Wait(cycletime / abs(speed));
-		}
-
-		mots.ArcadeDrive(0.0, 0.0);
-
-	}
 
 	// is the left side of ally switch our color?
 	bool startLeft(){
@@ -132,6 +93,7 @@ public:
 		std::string msg = frc::DriverStation::GetInstance().GetGameSpecificMessage();
 
 		// keep attempting until we get it
+		// will infinite loop on failure
 		while (msg.length() == 0) {
 			msg = frc::DriverStation::GetInstance().GetGameSpecificMessage();
 		}
@@ -149,21 +111,7 @@ public:
 
 		// get chosen auto
 		m_autoSelected = m_chooser.GetSelected();
-		std::cout << "Auto selected: " << m_autoSelected <<std::endl; // doesn't work (empty string)
-
-		m_autoSelected = SmartDashboard::GetString("Auto Selector", kAutoNameDefault);
-		std::cout << "Auto selected: " << m_autoSelected <<std::endl; // doesn't work("default")
-
-
-
-		// worked twice then stopped letting us change the value
-		m_autoSelected = autos[(int)
-			SmartDashboard::GetNumber("auto mode\n"
-				"0 - default (do nothing)\n"
-				"1 - drive straight (no dump)\n"
-				"2 - drive straight (left)\n"
-				"3 - drive straight (right)", 0)];
-		std::cout << "Auto selected: " << m_autoSelected <<std::endl; // default
+		std::cout << "Auto selected: " << m_autoSelected <<std::endl;
 
 
 		// enable motor controllers
@@ -175,25 +123,33 @@ public:
 
 
 		// drive straight dont dump
-		if (m_autoSelected == kAutoDriveStraight) {
-			driveStraight(gyro, drive, 2, -0.5);
+		if (m_autoSelected == kAuto) {
+			utils::driveStraight(gyro, drive, 2, -0.5);
 
 
 
 		// left auto
-		} else if (m_autoSelected == kAutoDriveStraightLeft) {
-			driveStraight(gyro, drive, 2, -0.5);
+		} else if (m_autoSelected == kAutoLeft) {
+			utils::driveStraight(gyro, drive, 2, -0.5);
 			if(startLeft()) {
 				flipper.Set(frc::DoubleSolenoid::kForward);
 			}
 
 		// right auto
-		} else if (m_autoSelected == kAutoDriveStraightRight) {
-			driveStraight(gyro, drive, 2, -0.5);
+		} else if (m_autoSelected == kAutoRight) {
+			utils::driveStraight(gyro, drive, 2, -0.5);
 			if(!startLeft()) {
 				flipper.Set(frc::DoubleSolenoid::kForward);
 			}
 
+		} else if (m_autoSelected == kAutoExperiment) {
+			utils::driveStraight(gyro, drive, 2, -0.5);
+			utils::turnDeg(gyro, drive, 90);
+			utils::driveStraight(gyro, drive, 0.5, -0.5);
+
+			if(startLeft()) {
+				flipper.Set(frc::DoubleSolenoid::kForward);
+			}
 
 		} else {
 			// failsafe, do nothing
@@ -215,7 +171,7 @@ public:
 
 		/* Driving
 		* a - reverse (toggle)
-		* b - slowmode (hold for slow)
+		* b - slow-mode (hold for slow)
 		* stick1 y - forwards & backwards
 		* stick2 x - left & right turning
 		*/
@@ -234,28 +190,30 @@ public:
 		}
 
 
+
+		// utils::expReduceBrownout averages in previous driving inputs to
+		// make driving smoother. inputs will be stored here
+		static double avgx = 0.0, avgy = 0.0;
+
 		// arcade drive with 2 sticks & 80% turn speed
 		// slowmode controlled by driver (button B)
 		drive.ArcadeDrive(
 
-			// forward backwards
-			(driveCtl.GetRawButton(2) ? 0.4 : 1.0) * // 40% movespeed in slowmode
-				dir * // +/- 1
-					driveCtl.GetRawAxis(1)
-
+			utils::expReduceBrownout(
+				// forward backwards
+				(driveCtl.GetRawButton(2) ? 0.4 : 1.0) * // 40% movespeed in slowmode
+					dir * // +/- 1
+						driveCtl.GetRawAxis(1)
+				, avgy
+			)
 			,
-
-			// left right
-			(driveCtl.GetRawButton(2) ? 0.8 : 1.0) * // .8*.8 = 64% turnspeed in slowmode
-				driveCtl.GetRawAxis(4) * 0.8
-
+			utils::expReduceBrownout(
+				// left right
+				(driveCtl.GetRawButton(2) ? 0.8 : 1.0) * // .8*.8 = 64% turnspeed in slowmode
+					driveCtl.GetRawAxis(4) * 0.8
+				, avgx
+			)
 		);
-
-
-
-
-
-
 
 
 
@@ -308,4 +266,5 @@ public:
 
 };
 
-START_ROBOT_CLASS(Robot)
+
+START_ROBOT_CLASS(Robot);
