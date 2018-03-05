@@ -15,7 +15,7 @@ public:
 
 
 
-	// we have a 6-cim tank drive 
+	// we have a 6-cim tank drive
 
 	// left side of drivetrain
 	frc::PWMVictorSPX left0Mot{0}, left1Mot{1}, left2Mot{2};
@@ -79,6 +79,13 @@ public:
 		// refresh rate
 		drive.SetExpiration(0.1);
 
+
+
+		// post USB camera feed to the SmartDashboard
+		cs::UsbCamera winchCam = CameraServer::GetInstance()->StartAutomaticCapture(0);
+		winchCam.SetResolution(320, 240);
+
+
 		std::cout <<"done\n";
 
 	}
@@ -117,39 +124,31 @@ public:
 		// enable motor controllers
 		drive.SetSafetyEnabled(false);
 
-
-
-
-
-
 		// drive straight dont dump
 		if (m_autoSelected == kAuto) {
-			utils::driveStraight(gyro, drive, 2, -0.5);
+			utils::driveStraight(gyro, drive, 4, -0.5);
 
-
-
-		// left auto
+		// left hook auto
 		} else if (m_autoSelected == kAutoLeft) {
+			utils::driveStraight(gyro, drive, 4, -0.5);
+			utils::turnDeg(gyro, drive, 90);
 			utils::driveStraight(gyro, drive, 2, -0.5);
+
+
 			if(startLeft()) {
-				flipper.Set(frc::DoubleSolenoid::kForward);
+				flipper.Set(frc::DoubleSolenoid::kReverse);
 			}
 
 		// right auto
 		} else if (m_autoSelected == kAutoRight) {
-			utils::driveStraight(gyro, drive, 2, -0.5);
+			utils::driveStraight(gyro, drive, 4, -0.5);
+
 			if(!startLeft()) {
-				flipper.Set(frc::DoubleSolenoid::kForward);
+				flipper.Set(frc::DoubleSolenoid::kReverse);
 			}
 
+		// left hook
 		} else if (m_autoSelected == kAutoExperiment) {
-			utils::driveStraight(gyro, drive, 2, -0.5);
-			utils::turnDeg(gyro, drive, 90);
-			utils::driveStraight(gyro, drive, 0.5, -0.5);
-
-			if(startLeft()) {
-				flipper.Set(frc::DoubleSolenoid::kForward);
-			}
 
 		} else {
 			// failsafe, do nothing
@@ -159,7 +158,7 @@ public:
 	}
 
 
-	
+
 	void AutonomousPeriodic(){}
 
 
