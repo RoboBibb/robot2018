@@ -109,11 +109,11 @@ namespace utils {
 		// cycletime is determined based on the speed of the robot
 		//		slower speed = longer input cycles
 		//		faster speed = shorter input cycles
-		for (int i = (int) (time / (cycletime / abs(speed))); i > 0; i--) {
+		for (int i = (int) (time / cycletime); i > 0; i--) {
 			// turn to correct heading
 			mots.ArcadeDrive(speed, gyro.GetAngle() * turningConst); // add negatives for inverted steering/drive
 			// drive straight a bit before readjusting steering
-			Wait(cycletime / abs(speed));
+			Wait(cycletime);
 		}
 
 		mots.ArcadeDrive(0.0, 0.0);
@@ -128,7 +128,7 @@ namespace utils {
 
 		// turning right
 		if (angleDeg > 0) {
-			while (gyro.GetAngle() < angleDeg) {
+			while (gyro.GetAngle() - angleDeg < -10) {
 				// drive at 50% speed until u get within 10 deg,
 				// then lower speed linearly as you approach
 				mots.ArcadeDrive(0.0,
@@ -137,13 +137,15 @@ namespace utils {
 							0.5 * (gyro.GetAngle() - angleDeg) / 10 + 0.1
 				);
 
+				SmartDashboard::PutNumber("angle", gyro.GetAngle());
+
 				// prevent CPU taxing
 				Wait(0.004);
 			}
 
 		// turning left
 		} else {
-			while (gyro.GetAngle() > angleDeg) {
+			while (gyro.GetAngle() - angleDeg > 10) {
 				// drive at 50% speed until u get within 10 deg,
 				// then lower speed linearly as you approach
 				mots.ArcadeDrive(0.0,
@@ -151,6 +153,8 @@ namespace utils {
 							0.5 :
 							0.5 * (gyro.GetAngle() - angleDeg) / 10 + 0.1
 				);
+
+				SmartDashboard::PutNumber("angle", gyro.GetAngle());
 
 				// prevent CPU taxing
 				Wait(0.004);
