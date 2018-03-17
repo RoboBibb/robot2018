@@ -2,7 +2,7 @@
 #define FRC4941_UTILS_HPP
 
 #include "WPILib.h"
-#include <math.h> // cos, pow,
+#include <cmath> // cos, pow, abs
 
 
 
@@ -95,8 +95,9 @@ namespace utils {
 
 	// recycled from last year's utils.hpp
 	// drives straight for a set period of time at a set speed
-	void driveStraight(frc::ADXRS450_Gyro& gyro, frc::DifferentialDrive& mots, const double time, const double speed = 0.5){
+	bool driveStraight(frc::ADXRS450_Gyro& gyro, frc::DifferentialDrive& mots, const double time, const double speed = 0.5){
 
+		std::cout <<"Driving straight for " <<time <<"seconds at " <<speed <<"power... ";
 		// did some math to guesstimate these values
 		const double
 			turningConst = -0.03, // if it doesnt work negate this
@@ -118,13 +119,20 @@ namespace utils {
 
 		mots.ArcadeDrive(0.0, 0.0);
 
+		std::cout <<"done\n";
+
+		// did we make goal within 5 degrees?
+		return std::abs(gyro.GetAngle()) < 5;
+
 	}
 
 
 	/// this will turn the robot a set number of degrees (can be negative)
 	// note, this isn't accurate as we aren't using calculus and a feedback loop, but should be good enough
-	void turnDeg(frc::ADXRS450_Gyro& gyro, frc::DifferentialDrive& mots, double angleDeg){
+	bool turnDeg(frc::ADXRS450_Gyro& gyro, frc::DifferentialDrive& mots, double angleDeg){
 		gyro.Reset();
+
+		std::cout <<"turning " <<angleDeg <<"degrees... ";
 
 		// turning right
 		if (angleDeg > 0) {
@@ -148,14 +156,20 @@ namespace utils {
 			while (gyro.GetAngle() - angleDeg > 10) {
 				// drive at 50% speed until u get within 10 deg,
 				// then lower speed linearly as you approach
-				mots.ArcadeDrive(0.0,
+				mots.ArcadeDrive(0.0, - (
 						angleDeg - gyro.GetAngle() < -10 ?
-							0.5 :
-							0.5 * (gyro.GetAngle() - angleDeg) / 10 + 0.1
+							0.5 : 0.2)
 				);
 
-				SmartDashboard::PutNumber("angle", gyro.GetAngle());
+				/* untested, should be more accurate, could cause/solve problems
+				mots.ArcadeDrive(0,
+						-(angleDeg - gyro.GetAngle() < -10 ?
+								0.5 :
+								0.5 * std::abs(angleDeg - gyro.GetAngle()) / 10 + 0.1)
+				);
+				*/
 
+				std::cout <<"done\n";
 				// prevent CPU taxing
 				Wait(0.004);
 			}
@@ -163,6 +177,11 @@ namespace utils {
 		}
 
 		mots.ArcadeDrive(0.0, 0.0);
+
+		std::cout <<"done\n";
+
+		// did we make goal within 5 degrees?
+		return std::abs(gyro.GetAngle() - angleDeg) < 5;
 	}
 
 }
