@@ -73,6 +73,8 @@ public:
 		m_chooser.AddObject(kAuto,kAuto);
 		m_chooser.AddObject(kAutoLeft,kAutoLeft);
 		m_chooser.AddObject(kAutoRight, kAutoRight);
+		m_chooser.AddObject(kAutoExperiment, kAutoExperiment);
+
 		frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 
 
@@ -130,13 +132,13 @@ public:
 
 		// left hook auto
 		} else if (m_autoSelected == kAutoLeft) {
-			utils::driveStraight(gyro, drive, 4, -0.5);
+			utils::driveStraight(gyro, drive, 4.5, -0.5);
 			utils::turnDeg(gyro, drive, 90);
 			utils::driveStraight(gyro, drive, 2, -0.5);
 
 
 			if(startLeft()) {
-				flipper.Set(frc::DoubleSolenoid::kReverse);
+				flipper.Set(frc::DoubleSolenoid::kForward);
 			}
 
 		// right auto
@@ -144,13 +146,28 @@ public:
 			utils::driveStraight(gyro, drive, 4, -0.5);
 
 			if(!startLeft()) {
-				flipper.Set(frc::DoubleSolenoid::kReverse);
+				flipper.Set(frc::DoubleSolenoid::kForward);
 			}
 
-		// left hook
+		// center auto, y pattern
 		} else if (m_autoSelected == kAutoExperiment) {
+			utils::driveStraight(gyro, drive, 1.5, -0.5);
 
+			if (startLeft()) {
+				utils::turnDeg(gyro, drive, -90); 			// turn left
+				utils::driveStraight(gyro, drive, 2, -0.5);	// drive forward
+				utils::turnDeg(gyro, drive, 90);			// turn right
+				utils::driveStraight(gyro, drive, 2, -0.5);	// drive straight
+				flipper.Set(frc::DoubleSolenoid::kForward);	// dump
+			} else {
+				utils::turnDeg(gyro, drive, 90);			// turn right
+				utils::driveStraight(gyro, drive, 2, -0.5);	// drive straight
+				utils::turnDeg(gyro, drive, -90);			// turn left
+				utils::driveStraight(gyro, drive, 2, -0.5);	// drive straight
+				flipper.Set(frc::DoubleSolenoid::kForward);	// dump
+			}
 		} else {
+
 			// failsafe, do nothing
 		}
 
@@ -242,18 +259,18 @@ public:
 
 
 		// elevator ctl
-		armCtl.Set(fxnCtl.GetRawAxis(1) * -0.4);
+		armCtl.Set(fxnCtl.GetRawAxis(1) * -0.6);
 
 
 		// control rollers
 		if (fxnCtl.GetRawButton(4)) {
 			lRoller.Set(.75);
 			rRoller.Set(.75);
-			std::cout <<"Kobe";
+			std::cout <<"Slurp";
 		} else if (fxnCtl.GetRawButton(3)) {
 			lRoller.Set(-1);
 			rRoller.Set(-1);
-			std::cout <<"Slurp";
+			std::cout <<"Kobe";
 		} else {
 			lRoller.Set(0);
 			rRoller.Set(0);
