@@ -134,12 +134,14 @@ public:
 
 		// left hook auto
 		} else if (m_autoSelected == kAutoLeft) {
-			utils::driveStraight(gyro, drive, 4.5, -0.5);
-			utils::turnDeg(gyro, drive, 90, this);
-			utils::driveStraight(gyro, drive, 2, -0.5);
+			bool autoErrors = false;
+
+			autoErrors |= utils::driveStraight(gyro, drive, 4.5, -0.5); // err = err || drive();
+			autoErrors |= utils::turnDeg(gyro, drive, 90, this);
+			autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5);
 
 
-			if(startLeft()) {
+			if(startLeft() && !autoErrors) {
 				flipper.Set(frc::DoubleSolenoid::kForward);
 			}
 
@@ -165,12 +167,20 @@ public:
 				flipper.Set(frc::DoubleSolenoid::kForward);
 			}
 
-		// center auto, y pattern
+		// center auto, Y pattern
 		} else if (m_autoSelected == kAutoCenter) {
-			utils::driveStraight(gyro, drive, 1.5, -0.5);
 
-			bool autoErrors = false;
+			/*[]X[]
+			 * | |
+			 *  T
+			 * [s]
+			 */
 
+			bool autoErrors = utils::driveStraight(gyro, drive, 1.5, -0.5); // drive forward a bit
+
+
+
+			// branch toward correct side of switch
 			if (startLeft()) {
 				autoErrors |= utils::turnDeg(gyro, drive, -90, this);		// turn left
 				autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5);	// drive forward
@@ -201,9 +211,7 @@ public:
 	}
 
 
-
 	void AutonomousPeriodic(){}
-
 
 
 	void TeleopInit(){}
@@ -227,6 +235,7 @@ public:
 			dir = -dir;
 			switchable = false;
 			std::cout <<"driving reversed\n";
+
 		} else if (!switchable && !driveCtl.GetRawButton(1)) {
 			switchable = true;
 		}
@@ -239,7 +248,7 @@ public:
 
 
 		// arcade drive with 2 sticks & 80% turn speed
-		// slowmode controlled by driver (button B)
+		// slow-mode controlled by driver (button B)
 		drive.ArcadeDrive(
 
 			utils::expReduceBrownout(
@@ -293,11 +302,11 @@ public:
 		if (fxnCtl.GetRawButton(4)) {
 			lRoller.Set(.75);
 			rRoller.Set(.75);
-			std::cout <<"Slurp";
+
 		} else if (fxnCtl.GetRawButton(3)) {
 			lRoller.Set(-1);
 			rRoller.Set(-1);
-			std::cout <<"Kobe";
+
 		} else {
 			lRoller.Set(0);
 			rRoller.Set(0);
