@@ -121,8 +121,8 @@ namespace utils {
 
 		std::cout <<"done (dif="<<gyro.GetAngle() <<")\n";
 
-		// did we make goal within 5 degrees?
-		return std::abs(gyro.GetAngle()) < 5;
+		// did we fail to keep straight? (5 deg tolerance)
+		return std::abs(gyro.GetAngle()) > 5;
 
 	}
 
@@ -180,8 +180,8 @@ namespace utils {
 
 		std::cout <<"done (dif = " <<gyro.GetAngle() - angleDeg <<")\n";
 
-		// did we make our goal within 5 degrees?
-		return std::abs(gyro.GetAngle() - angleDeg) < 5;
+		// did we fail to turn the correct angle (5 deg tolerance)
+		return std::abs(gyro.GetAngle() - angleDeg) > 5;
 	}
 
 }
