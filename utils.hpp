@@ -7,7 +7,7 @@
 
 
 
-/*inline lesson in C++
+/* inline lesson in C++
  * so new people remember how things work next year
  * ternary operators:
  *  - shorthand if
@@ -119,7 +119,7 @@ namespace utils {
 
 		mots.ArcadeDrive(0.0, 0.0);
 
-		std::cout <<"done\n";
+		std::cout <<"done (dif="<<gyro.GetAngle() <<")\n";
 
 		// did we make goal within 5 degrees?
 		return std::abs(gyro.GetAngle()) < 5;
@@ -127,60 +127,60 @@ namespace utils {
 	}
 
 
+
 	/// this will turn the robot a set number of degrees (can be negative)
 	// note, this isn't accurate as we aren't using calculus and a feedback loop, but should be good enough
-	bool turnDeg(frc::ADXRS450_Gyro& gyro, frc::DifferentialDrive& mots, double angleDeg){
+	// IsAutonomous points to RobotBase::IsAutonomous() so we can avoid infinite loops which prevent us from ending auto
+	bool turnDeg(frc::ADXRS450_Gyro& gyro, frc::DifferentialDrive& mots, double angleDeg, RobotBase* robot = nullptr){
+
+		const double cycleTime = 0.004, // prevent cpu taxing
+					 tolerance = 5,		// how close is "good enough" (values too low cause infinite spinning)
+					 turnSpeed = 0.5;
+
+
 		gyro.Reset();
 
-		std::cout <<"turning " <<angleDeg <<"degrees... ";
+		std::cout <<"turning " <<angleDeg <<" degrees... ";
 
 		// turning right
 		if (angleDeg > 0) {
-			while (gyro.GetAngle() - angleDeg < -10) {
-				// drive at 50% speed until u get within 10 deg,
+			while (gyro.GetAngle() - angleDeg < -tolerance && robot ? robot->IsAutonomous() : false) {
+				// turn at 50% speed until u get within 10 deg,
 				// then lower speed linearly as you approach
-				mots.ArcadeDrive(0.0,
+				mots.ArcadeDrive(0,
 						angleDeg - gyro.GetAngle() > 10 ?
-							0.5 :
-							0.5 * (gyro.GetAngle() - angleDeg) / 10 + 0.1
+							turnSpeed :
+							turnSpeed * (gyro.GetAngle() - angleDeg) / 10 + 0.1
 				);
 
 				SmartDashboard::PutNumber("angle", gyro.GetAngle());
 
 				// prevent CPU taxing
-				Wait(0.004);
+				Wait(cycleTime);
 			}
 
 		// turning left
 		} else {
-			while (gyro.GetAngle() - angleDeg > 10) {
-				// drive at 50% speed until u get within 10 deg,
+			while (gyro.GetAngle() - angleDeg > tolerance && robot ? robot->IsAutonomous() : false) {
+				// turn at 50% speed until u get within 10 deg,
 				// then lower speed linearly as you approach
-				mots.ArcadeDrive(0.0, - (
-						angleDeg - gyro.GetAngle() < -10 ?
-							0.5 : 0.2)
-				);
-
-				/* untested, should be more accurate, could cause/solve problems
 				mots.ArcadeDrive(0,
 						-(angleDeg - gyro.GetAngle() < -10 ?
-								0.5 :
-								0.5 * std::abs(angleDeg - gyro.GetAngle()) / 10 + 0.1)
+								turnSpeed :
+								turnSpeed * -(angleDeg - gyro.GetAngle()) / 10 + 0.1)
 				);
-				*/
 
-				std::cout <<"done\n";
 				// prevent CPU taxing
-				Wait(0.004);
+				Wait(cycleTime);
 			}
 
 		}
 
 		mots.ArcadeDrive(0.0, 0.0);
 
-		std::cout <<"done\n";
+		std::cout <<"done (dif = " <<gyro.GetAngle() - angleDeg <<")\n";
 
-		// did we make goal within 5 degrees?
+		// did we make our goal within 5 degrees?
 		return std::abs(gyro.GetAngle() - angleDeg) < 5;
 	}
 
