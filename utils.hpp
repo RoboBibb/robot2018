@@ -153,8 +153,6 @@ namespace utils {
 							turnSpeed * (gyro.GetAngle() - angleDeg) / 10 + 0.1
 				);
 
-				SmartDashboard::PutNumber("angle", gyro.GetAngle());
-
 				// prevent CPU taxing
 				Wait(cycleTime);
 			}
