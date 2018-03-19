@@ -145,20 +145,23 @@ public:
 
 		// right auto
 		} else if (m_autoSelected == kAutoRight) {
-			utils::driveStraight(gyro, drive, 4, -0.5);
+			bool autoErrors = utils::driveStraight(gyro, drive, 4, -0.5);
 
-			if(!startLeft()) {
+			// if everything executed flawlessly and we're on the correct side
+			if(!startLeft() && !autoErrors) {
 				flipper.Set(frc::DoubleSolenoid::kForward);
 			}
 
 		// right auto
 		} else if (m_autoSelected == kAutoRightHook) {
-			utils::driveStraight(gyro, drive, 4.5, -0.5);
-			utils::turnDeg(gyro, drive, -90, this);
-			utils::driveStraight(gyro, drive, 2, -0.5);
+			bool autoErrors = false;
+			autoErrors |= utils::driveStraight(gyro, drive, 4.5, -0.5);
+			autoErrors |= utils::turnDeg(gyro, drive, -90, this);
+			autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5);
 
 
-			if(!startLeft()) {
+			// if everything executed flawlessly and we're on the correct side
+			if(!startLeft() && !autoErrors) {
 				flipper.Set(frc::DoubleSolenoid::kForward);
 			}
 
