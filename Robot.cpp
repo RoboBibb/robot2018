@@ -59,7 +59,8 @@ public:
 	const std::string kAuto = "straight";	 // drive forwards
 	const std::string kAutoLeft = "left";   // starting on left side of field
 	const std::string kAutoRight = "right"; // starting on right side of field
-	const std::string kAutoExperiment = "experiment"; // left hook
+	const std::string kAutoRightHook = "right hook"; // Right side L pattern
+	const std::string kAutoCenter = "center"; // left hook
 	std::string m_autoSelected;
 
 
@@ -73,7 +74,8 @@ public:
 		m_chooser.AddObject(kAuto,kAuto);
 		m_chooser.AddObject(kAutoLeft,kAutoLeft);
 		m_chooser.AddObject(kAutoRight, kAutoRight);
-		m_chooser.AddObject(kAutoExperiment, kAutoExperiment);
+		m_chooser.AddObject(kAutoRightHook, kAutoRightHook);
+		m_chooser.AddObject(kAutoCenter, kAutoCenter);
 
 		frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
 
@@ -133,7 +135,7 @@ public:
 		// left hook auto
 		} else if (m_autoSelected == kAutoLeft) {
 			utils::driveStraight(gyro, drive, 4.5, -0.5);
-			utils::turnDeg(gyro, drive, 90);
+			utils::turnDeg(gyro, drive, 90, this);
 			utils::driveStraight(gyro, drive, 2, -0.5);
 
 
@@ -149,26 +151,47 @@ public:
 				flipper.Set(frc::DoubleSolenoid::kForward);
 			}
 
+		// right auto
+		} else if (m_autoSelected == kAutoRightHook) {
+			utils::driveStraight(gyro, drive, 4.5, -0.5);
+			utils::turnDeg(gyro, drive, -90, this);
+			utils::driveStraight(gyro, drive, 2, -0.5);
+
+
+			if(!startLeft()) {
+				flipper.Set(frc::DoubleSolenoid::kForward);
+			}
+
 		// center auto, y pattern
-		} else if (m_autoSelected == kAutoExperiment) {
+		} else if (m_autoSelected == kAutoCenter) {
 			utils::driveStraight(gyro, drive, 1.5, -0.5);
 
+			bool autoErrors = false;
+
 			if (startLeft()) {
-				utils::turnDeg(gyro, drive, -90); 			// turn left
-				utils::driveStraight(gyro, drive, 2, -0.5);	// drive forward
-				utils::turnDeg(gyro, drive, 90);			// turn right
-				utils::driveStraight(gyro, drive, 2, -0.5);	// drive straight
-				flipper.Set(frc::DoubleSolenoid::kForward);	// dump
+				autoErrors |= utils::turnDeg(gyro, drive, -90, this);		// turn left
+				autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5);	// drive forward
+				autoErrors |= utils::turnDeg(gyro, drive, 90, this);		// turn right
+				autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5);	// drive straight
+
 			} else {
-				utils::turnDeg(gyro, drive, 90);			// turn right
-				utils::driveStraight(gyro, drive, 2, -0.5);	// drive straight
-				utils::turnDeg(gyro, drive, -90);			// turn left
-				utils::driveStraight(gyro, drive, 2, -0.5);	// drive straight
-				flipper.Set(frc::DoubleSolenoid::kForward);	// dump
+				autoErrors |= utils::turnDeg(gyro, drive, 90, this);		// turn right
+				autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5);	// drive straight
+				autoErrors |= utils::turnDeg(gyro, drive, -90, this);		// turn left
+				autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5);	// drive straight
+
 			}
+
+			// if everything executed flawlessly then dump
+			if (!autoErrors) {
+				flipper.Set(frc::DoubleSolenoid::kForward);
+			}
+
+
 		} else {
 
 			// failsafe, do nothing
+
 		}
 
 
@@ -211,6 +234,7 @@ public:
 		// make driving smoother. inputs will be stored here
 		static double avgx = 0.0, avgy = 0.0;
 
+
 		// arcade drive with 2 sticks & 80% turn speed
 		// slowmode controlled by driver (button B)
 		drive.ArcadeDrive(
@@ -218,7 +242,7 @@ public:
 			utils::expReduceBrownout(
 				// forward backwards
 				(driveCtl.GetRawButton(2) ? 0.4 : 1.0) * // 40% movespeed in slowmode
-					dir * // +/- 1
+					dir * // +/- 1 (forward/reverse)
 						driveCtl.GetRawAxis(1)
 				, avgy
 			)
