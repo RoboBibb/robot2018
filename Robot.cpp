@@ -109,7 +109,7 @@ public:
 			msg = frc::DriverStation::GetInstance().GetGameSpecificMessage();
 		}
 
-		std::cout <<"done\n";
+		std::cout <<"done\n" << "received " << msg <<std::endl;
 
 		// return result of this condition
 		return msg[0] == 'L';
@@ -136,9 +136,9 @@ public:
 		} else if (m_autoSelected == kAutoLeft) {
 			bool autoErrors = false;
 
-			autoErrors |= utils::driveStraight(gyro, drive, 4.5, -0.5); // err = err || drive();
+			autoErrors |= utils::driveStraight(gyro, drive, 4.5, -0.5, this); // err = err || drive();
 			autoErrors |= utils::turnDeg(gyro, drive, 90, this);
-			autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5);
+			autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5, this);
 
 
 			if(startLeft() && !autoErrors) {
@@ -147,7 +147,7 @@ public:
 
 		// right auto
 		} else if (m_autoSelected == kAutoRight) {
-			bool autoErrors = utils::driveStraight(gyro, drive, 4, -0.5);
+			bool autoErrors = utils::driveStraight(gyro, drive, 4, -0.5, this);
 
 			// if everything executed flawlessly and we're on the correct side
 			if(!startLeft() && !autoErrors) {
@@ -157,9 +157,9 @@ public:
 		// right auto
 		} else if (m_autoSelected == kAutoRightHook) {
 			bool autoErrors = false;
-			autoErrors |= utils::driveStraight(gyro, drive, 4.5, -0.5);
+			autoErrors |= utils::driveStraight(gyro, drive, 4.5, -0.5, this);
 			autoErrors |= utils::turnDeg(gyro, drive, -90, this);
-			autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5);
+			autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5, this);
 
 
 			// if everything executed flawlessly and we're on the correct side
@@ -176,22 +176,22 @@ public:
 			 * [s]
 			 */
 
-			bool autoErrors = utils::driveStraight(gyro, drive, 1.5, -0.5); // drive forward a bit
+			bool autoErrors = utils::driveStraight(gyro, drive, 1.5, -0.5, this); // drive forward a bit
 
 
 
 			// branch toward correct side of switch
 			if (startLeft()) {
 				autoErrors |= utils::turnDeg(gyro, drive, -90, this);		// turn left
-				autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5);	// drive forward
+				autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5, this);	// drive forward
 				autoErrors |= utils::turnDeg(gyro, drive, 90, this);		// turn right
-				autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5);	// drive straight
+				autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5, this);	// drive straight
 
 			} else {
 				autoErrors |= utils::turnDeg(gyro, drive, 90, this);		// turn right
-				autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5);	// drive straight
+				autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5, this);	// drive straight
 				autoErrors |= utils::turnDeg(gyro, drive, -90, this);		// turn left
-				autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5);	// drive straight
+				autoErrors |= utils::driveStraight(gyro, drive, 2, -0.5, this);	// drive straight
 
 			}
 
