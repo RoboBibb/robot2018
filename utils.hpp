@@ -148,9 +148,10 @@ namespace utils {
 				// turn at 50% speed until u get within 10 deg,
 				// then lower speed linearly as you approach
 				mots.ArcadeDrive(0,
-						angleDeg - gyro.GetAngle() > 10 ?
+						std::abs(angleDeg - gyro.GetAngle()) > 10 ?
 							turnSpeed :
-							turnSpeed * (gyro.GetAngle() - angleDeg) / 10 + 0.1
+							turnSpeed * (gyro.GetAngle() - angleDeg) / 10
+								+ 0.1 * angleDeg - gyro.GetAngle > 0 ? 1 : -1
 				);
 
 				// prevent CPU taxing
@@ -163,9 +164,10 @@ namespace utils {
 				// turn at 50% speed until u get within 10 deg,
 				// then lower speed linearly as you approach
 				mots.ArcadeDrive(0,
-						-(angleDeg - gyro.GetAngle() < -10 ?
+						-(std::abs(angleDeg - gyro.GetAngle()) > 10 ?
 								turnSpeed :
-								turnSpeed * -(angleDeg - gyro.GetAngle()) / 10 + 0.1)
+								turnSpeed * -(angleDeg - gyro.GetAngle()) / 10
+									+ 0.1 * angleDeg - gyro.GetAngle > 0 ? 1 : -1)
 				);
 
 				// prevent CPU taxing
