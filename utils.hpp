@@ -95,12 +95,12 @@ namespace utils {
 
 	// recycled from last year's utils.hpp
 	// drives straight for a set period of time at a set speed
-	bool driveStraight(frc::ADXRS450_Gyro& gyro, frc::DifferentialDrive& mots, const double time, const double speed = 0.5){
+	bool driveStraight(frc::ADXRS450_Gyro& gyro, frc::DifferentialDrive& mots, const double time, const double speed = 0.5, RobotBase* robot = nullptr){
 
 		std::cout <<"Driving straight for " <<time <<"seconds at " <<speed <<"power... ";
 		// did some math to guesstimate these values
 		const double
-			turningConst = -0.03, // if it doesnt work negate this
+			turningConst = -0.05, // if it doesnt work negate this
 			cycletime = 0.004;
 
 		// get angle to maintain as zero
@@ -110,7 +110,7 @@ namespace utils {
 		// cycletime is determined based on the speed of the robot
 		//		slower speed = longer input cycles
 		//		faster speed = shorter input cycles
-		for (int i = (int) (time / cycletime); i > 0; i--) {
+		for (int i = (int) (time / cycletime); i > 0 && robot ? robot->IsAutonomous() : false ; i--) {
 			// turn to correct heading
 			mots.ArcadeDrive(speed, gyro.GetAngle() * turningConst); // add negatives for inverted steering/drive
 			// drive straight a bit before readjusting steering
@@ -134,7 +134,7 @@ namespace utils {
 	bool turnDeg(frc::ADXRS450_Gyro& gyro, frc::DifferentialDrive& mots, double angleDeg, RobotBase* robot = nullptr){
 
 		const double cycleTime = 0.004, // prevent cpu taxing
-					 tolerance = 5,		// how close is "good enough" (values too low cause infinite spinning)
+					 tolerance = 3,		// how close is "good enough" (values too low cause infinite spinning)
 					 turnSpeed = 0.5;
 
 
@@ -151,7 +151,7 @@ namespace utils {
 						std::abs(angleDeg - gyro.GetAngle()) > 10 ?
 							turnSpeed :
 							turnSpeed * (gyro.GetAngle() - angleDeg) / 10
-								+ 0.1 * angleDeg - gyro.GetAngle > 0 ? 1 : -1
+								+ 0.1// * angleDeg - gyro.GetAngle() > 0 ? 1 : -1
 				);
 
 				// prevent CPU taxing
@@ -167,7 +167,8 @@ namespace utils {
 						-(std::abs(angleDeg - gyro.GetAngle()) > 10 ?
 								turnSpeed :
 								turnSpeed * -(angleDeg - gyro.GetAngle()) / 10
-									+ 0.1 * angleDeg - gyro.GetAngle > 0 ? 1 : -1)
+									+ 0.1// * angleDeg - gyro.GetAngle() > 0 ? 1 : -1
+									)
 				);
 
 				// prevent CPU taxing
@@ -185,8 +186,6 @@ namespace utils {
 	}
 
 }
-
-
 
 
 #endif
