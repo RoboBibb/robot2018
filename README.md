@@ -16,6 +16,7 @@ Code for our 2018 robot. This year we decided to make the code simpler than norm
 # What We Want to Show Off
 
 ## Automatic Driving
+As a result of not having encoders on this robot, autonomous driving code is somewhat of a challenge to implement, despite this we have created a drive straight function wich works and a turning function which is accurate to within 1/5th of a degree. Both of these functions return a value which can be read to determine if there was an error, and have debugging info in case they don't work perfectly. We have done quite a lot with a gyro as our only sensor.
 - `utils::driveStraight(gyro, drivetrain, time, speed)`: Uses gyro to drive straight for a set period of time
 - `utils::turnDeg(gyro, drivetrain, angle)`: turns robot set number of degrees, speed decreases linearly upon aproach
 
@@ -28,14 +29,13 @@ We have been improving our driving code for the past 3 seasons. We find that usi
 - we added a slowmode button to allow for precise movements in between going fast.
 
 # Autonomous
-- **left side:** drives forward, turns 90 degrees right, drives forward, dumps cube into switch if correct color
+All of the functions in  `utils.hpp` which control robot driving return values to tell us if they completed successfully
+All of our autonomous modes have a "do nothing" failsafe, so if there are any field errors or the driver forgets to change the auto the robot won't move. 
+- **left hook:** drives forward, turns 90 degrees right, drives forward, dumps cube into switch if correct color
+- **right hook:** drives forward, turns 90 degrees left, drives forward, dumps cube into switch if correct color
 - **right side:** drives forward, dumps cube into switch if correct color
-- **drive straight; do nothing:** self explanitory
-- **experiment:** not implemented yet, will need testing, expect this at state, start at middle
-   - drives forward, turns toward correct side, drives forward, turns back toward switch, drive forward, dump
-     - pros: easy to code since doesn't need to use arms
-     - cons: 2 turns, could get unaligned
-   - drives forward, turns toward correct side of switch, angles shooter, launches cube into switch
+- **drive straight; do nothing:** self explanitory, only for use when other teams need space
+- **center:** drives forward, gets field data, turns to correct side of switch, drives forward, turns toward switch, dumps
 
 # Controls
 Because this robot has lots of things to control, we need two drivers. As usual we work closely with drive team in order to make the controls as natural as possible. These are what they have given us.
