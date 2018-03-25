@@ -2,7 +2,7 @@
 #define FRC4941_UTILS_HPP
 
 #include "WPILib.h"
-#include <cmath> // cos, pow, abs
+#include <cmath> // cos, pow, fabs
 
 
 
@@ -105,6 +105,8 @@ namespace utils {
 			offset = gyro.GetAngle(); // gyro angle before movement
 
 
+		bool err = false;
+
 		// drive forward for the set ammount of time
 		// cycletime is determined based on the speed of the robot
 		//		slower speed = longer input cycles
@@ -114,6 +116,11 @@ namespace utils {
 			mots.ArcadeDrive(speed, (gyro.GetAngle() - offset) * turningConst); // add negatives for inverted steering/drive
 			// drive straight a bit before readjusting steering
 			Wait(cycletime);
+
+			// more than 15 degrees of error means something bad has happened
+			if (std::fabs(gyro.GetAngle() - offset) > 15)
+				err = true;
+			
 		}
 
 		mots.ArcadeDrive(0.0, 0.0);
@@ -121,7 +128,7 @@ namespace utils {
 		std::cout <<"done (dif="<<gyro.GetAngle() <<")\n";
 
 		// did we fail to keep straight? (5 deg tolerance)
-		return std::abs(gyro.GetAngle()) > 5;
+		return err || std::fabs(gyro.GetAngle()) > 5;
 
 	}
 
@@ -148,7 +155,7 @@ namespace utils {
 				// then lower speed linearly as you approach
 				// you are not expected to understand this code
 				mots.ArcadeDrive(0,
-						std::abs(angleDeg - (gyro.GetAngle() - offset)) > 10 ?
+						std::fabs(angleDeg - (gyro.GetAngle() - offset)) > 10 ?
 							turnSpeed :
 							turnSpeed * ((gyro.GetAngle() - offset) - angleDeg) / 10
 								+ 0.1// * angleDeg - gyro.GetAngle() > 0 ? 1 : -1
@@ -164,7 +171,7 @@ namespace utils {
 				// turn at 50% speed until u get within 10 deg,
 				// then lower speed linearly as you approach
 				mots.ArcadeDrive(0,
-						-(std::abs(angleDeg - (gyro.GetAngle() - offset)) > 10 ?
+						-(std::fabs(angleDeg - (gyro.GetAngle() - offset)) > 10 ?
 								turnSpeed :
 								turnSpeed * -(angleDeg - (gyro.GetAngle() - offset)) / 10
 									+ 0.1// * angleDeg - gyro.GetAngle() > 0 ? 1 : -1
@@ -182,7 +189,7 @@ namespace utils {
 		std::cout <<"done (dif = " <<(gyro.GetAngle() - offset) - angleDeg <<")\n";
 
 		// did we fail to turn the correct angle (5 deg tolerance)
-		return std::abs((gyro.GetAngle() - offset) - angleDeg) > 5;
+		return std::fabs((gyro.GetAngle() - offset) - angleDeg) > 5;
 	}
 
 }
