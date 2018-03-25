@@ -101,10 +101,9 @@ namespace utils {
 		// did some math to guesstimate these values
 		const double
 			turningConst = -0.05, // if it doesnt work negate this
-			cycletime = 0.004;
+			cycletime = 0.004,
+			offset = gyro.GetAngle(); // gyro angle before movement
 
-		// get angle to maintain as zero
-		gyro.Reset();
 
 		// drive forward for the set ammount of time
 		// cycletime is determined based on the speed of the robot
@@ -112,7 +111,7 @@ namespace utils {
 		//		faster speed = shorter input cycles
 		for (int i = (int) (time / cycletime); i > 0 && robot ? robot->IsAutonomous() : false ; i--) {
 			// turn to correct heading
-			mots.ArcadeDrive(speed, gyro.GetAngle() * turningConst); // add negatives for inverted steering/drive
+			mots.ArcadeDrive(speed, (gyro.GetAngle() - offset) * turningConst); // add negatives for inverted steering/drive
 			// drive straight a bit before readjusting steering
 			Wait(cycletime);
 		}
@@ -147,10 +146,11 @@ namespace utils {
 			while (gyro.GetAngle() - angleDeg < -tolerance && robot ? robot->IsAutonomous() : false) {
 				// turn at 50% speed until u get within 10 deg,
 				// then lower speed linearly as you approach
+				// you are not expected to understand this code
 				mots.ArcadeDrive(0,
-						std::abs(angleDeg - gyro.GetAngle()) > 10 ?
+						std::abs(angleDeg - (gyro.GetAngle() - offset)) > 10 ?
 							turnSpeed :
-							turnSpeed * (gyro.GetAngle() - angleDeg) / 10
+							turnSpeed * ((gyro.GetAngle() - offset) - angleDeg) / 10
 								+ 0.1// * angleDeg - gyro.GetAngle() > 0 ? 1 : -1
 				);
 
@@ -164,9 +164,9 @@ namespace utils {
 				// turn at 50% speed until u get within 10 deg,
 				// then lower speed linearly as you approach
 				mots.ArcadeDrive(0,
-						-(std::abs(angleDeg - gyro.GetAngle()) > 10 ?
+						-(std::abs(angleDeg - (gyro.GetAngle() - offset)) > 10 ?
 								turnSpeed :
-								turnSpeed * -(angleDeg - gyro.GetAngle()) / 10
+								turnSpeed * -(angleDeg - (gyro.GetAngle() - offset)) / 10
 									+ 0.1// * angleDeg - gyro.GetAngle() > 0 ? 1 : -1
 									)
 				);
@@ -179,10 +179,10 @@ namespace utils {
 
 		mots.ArcadeDrive(0.0, 0.0);
 
-		std::cout <<"done (dif = " <<gyro.GetAngle() - angleDeg <<")\n";
+		std::cout <<"done (dif = " <<(gyro.GetAngle() - offset) - angleDeg <<")\n";
 
 		// did we fail to turn the correct angle (5 deg tolerance)
-		return std::abs(gyro.GetAngle() - angleDeg) > 5;
+		return std::abs((gyro.GetAngle() - offset) - angleDeg) > 5;
 	}
 
 }
