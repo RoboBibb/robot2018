@@ -128,6 +128,10 @@ public:
 		// enable motor controllers
 		drive.SetSafetyEnabled(false);
 
+		// reset gyro to zero, (not required by functions, but still good habit
+		gyro.Reset();
+		std::cout <<"gyro reset to " <<gyro.GetAngle() <<" degrees\n";
+
 		// drive straight dont dump
 		if (m_autoSelected == kAuto) {
 			utils::driveStraight(gyro, drive, 4, -0.5);
@@ -170,15 +174,7 @@ public:
 		// center auto, Y pattern
 		} else if (m_autoSelected == kAutoCenter) {
 
-			/*[]X[]
-			 * | |
-			 *  T
-			 * [s]
-			 */
-
 			bool autoErrors = utils::driveStraight(gyro, drive, 1.5, -0.5, this); // drive forward a bit
-
-
 
 			// branch toward correct side of switch
 			if (startLeft()) {
