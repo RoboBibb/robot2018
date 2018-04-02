@@ -129,7 +129,7 @@ public:
 		drive.SetSafetyEnabled(false);
 
 		// reset gyro to zero, (not required by functions, but still good habit
-		gyro.Reset();
+		//gyro.Reset();
 		std::cout <<"gyro reset to " <<gyro.GetAngle() <<" degrees\n";
 
 		// drive straight dont dump
